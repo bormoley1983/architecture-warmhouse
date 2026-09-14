@@ -1,0 +1,88 @@
+@startuml
+title Smart-House System - ER Diagram (AI-Assisted)
+
+' Use left-to-regex direction to reduce vertical scrolling
+left to right direction
+
+' --- IDENTITY DOMAIN ---
+package "Identity & Access" #F5F5F5 {
+    class User {
+        +UUID user_id <<PK>>
+        +String username
+        +String email
+        +String auth_config
+    }
+}
+
+' --- INVENTORY & HARDWARE DOMAIN ---
+package "Hardware & Inventory" #E3F2FD {
+    class Module {
+        +UUID module_id <<PK>>
+        +String name
+        +String module_type
+        +UUID user_id <<FK>>
+    }
+
+    class Sensor {
+        +int sensor_id <<PK>>
+        +String name
+        +String location
+        +float64 current_value
+        +int sensor_type_id <<FK>>
+        +UUID owner_user_id <<FK>>
+    }
+
+    class SensorType {
+        +int type_id <<PK>>
+        +String type_name
+        +String unit
+    }
+}
+
+' --- OPERATIONS & ACTIONS DOMAIN ---
+package "Operations & Automation" #E8F5E9 {
+    class Command {
+        +UUID command_id <<PK>>
+        +int target_sensor_id <<FK>>
+        +String command_type
+        +String payload
+        +DateTime executed_at
+    }
+
+    class AutomationRule {
+        +UUID rule_id <<PK>>
+        +String name
+        +Boolean is_enabled
+        +UUID user_id <<FK>>
+    }
+
+    class RuleTrigger {
+        +UUID trigger_timestamp <<PK>>
+        +UUID rule_id <<FK>>
+        +String condition_logic
+    }
+
+    class RuleAction {
+        +UUID action_id <<PK>>
+        +UUID rule_id <<FK>>
+        +String action_payload
+    }
+}
+
+' --- RELATIONSHIPS ---
+
+' Identity to Inventory
+User "1" -- "0..*" Module : "purchases"
+User "1" -- "0..*" Sensor : "manages"
+Module "1" -- "0..*" Sensor : "contains"
+SensorType "1" -- "0..*" Sensor : "defines"
+
+' Inventory to Operations
+Sensor "1" -- "0..*" Command : "receives"
+User "1" -- "0..*" AutomationRule : "creates"
+
+' Automation Structure
+AutomationRule "1" *-- "1..*" RuleTrigger : "has triggers"
+AutomationRule "1" *-- "1..*" RuleAction : "execates actions"
+
+@enduml

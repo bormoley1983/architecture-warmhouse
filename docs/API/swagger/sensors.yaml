@@ -1,0 +1,147 @@
+openapi: 3.0.3
+info:
+  title: Smart-House Sensors API
+  description: API for managing smart home sensors and monitoring real-time temperature data.
+  version: 1.0.0
+servers:
+  - url: http://localhost:80	80/api/v1
+    description: Local development server
+paths:
+  /sensors:
+    get:
+      summary: Get all sensors
+      responses:
+        '200':
+          description: A list of sensors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sensor'
+    post:
+      summary: Create a new sensor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorCreate'
+      responses:
+        '201':
+          description: Sensor created
+  /sensors/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get sensor by ID
+      responses:
+        '200':
+          description: Sensor details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '404':
+          description: Sensor not found
+    put:
+      summary: Update sensor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorUpdate'
+      responses:
+        '200':
+          description: Sensor updated
+    delete:
+      summary: Delete sensor
+      responses:
+        '204':
+          description: Sensor deleted
+    patch:
+      summary: Update sensor value
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Value updated
+  /sensors/temperature/{location}:
+    get:
+      summary: Get real-time temperature by location
+      parameters:
+        - name: location
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Temperature data from external API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemperatureResponse'
+
+components:
+  schemas:
+    # --- Core Entities ---
+    Sensor:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        type: { type: string }
+        location: { type: string }
+        value: { type: number, format: double }
+        unit: { type: string }
+        status: { type: string }
+        last_updated: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+
+    TemperatureResponse:
+      type: object
+      properties:
+        value: { type: number, format: double }
+        unit: { type: string }
+        timestamp: { type: string, format: date-time }
+        location: { type: string }
+        status: { type: string }
+        sensor_id: { type: string }
+        sensor_type: { type: string }
+        description: { type: string }
+
+    # --- Data Transfer Objects (DTOs) ---
+    SensorCreate:
+      type: object
+      required: [name, type, location]
+      properties:
+        name: { type: string }
+        type: { type: string }
+        location: { type: string }
+        unit: { type: string }
+
+    SensorUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        type: { type: string }
+        location: { type: string }
+        value: { type: number, format: double }
+        unit: { type: string }
+        status: { type: string }

@@ -1,0 +1,18 @@
+@startuml
+
+title Smart-house Context Diagram - Current Monolytic implementation
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "User", "A user of current 'Smart-house' instance")
+Person(admin, "Administrator", "An administrator managing the system during service")
+System(SmartHouse, "Smart-house system", "System managing thermal control, reading thermal sensors data")
+
+System_Ext(MQTTRouter, "MQTT Router", "Operates and manages all house sesnsors")
+
+Rel(user, SmartHouse, "Sets desired temperature, reads thermal sensors data")
+Rel(admin, SmartHouse, "Manages the system in-place up on request")
+Rel(SmartHouse, MQTTRouter, "Usage and control of all the sensors in specified house")
+@enduml

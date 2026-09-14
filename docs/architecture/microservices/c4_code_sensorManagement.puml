@@ -1,0 +1,49 @@
+@startuml
+
+title Smart-House Sensors Management - Code Diagram (AI-assisted)
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+class SensorHandler {
+    +RegisterRoutes(router: *gin.RouterGroup): void
+    +GetSensors(c: *gin.Context): void
+    +GetSensorByID(c: *gin.Context): void
+    +CreateSensor(c: *gin.Context): void
+    +UpdateSensor(c: *gin.Context): void
+    +DeleteSensor(c: *gin.Context): void
+    +UpdateSensorValue(c: *gin.Context): void
+}
+
+class DB {
+    +GetSensors(ctx: context.Context): ([]models.Sensor, error)
+    +GetSensorByID(ctx: context.Context, id: int): (models.Sensor, error)
+    +CreateSensor(ctx: context.Context, s: models.Sensor): error
+    +UpdateSensor(ctx: context.Context, s: models.Sensor): error
+    +DeleteSensor(ctx: context.Context, id: int): error
+}
+
+class Sensor {
+    +int id
+    +string name
+    +SensorType type
+    +string location
+    +float64 value
+    +string unit
+    +string status
+    +datetime last_updated
+    +datetime created_at
+}
+
+class SensorType {
+    +string value
+}
+
+SensorHandler --> DB : "uses to persist/retrieve"
+SensorHandler ..> Sensor : "manages"
+
+Sensor --> SensorType : "has type"
+DB ..> Sensor : "manages"
+
+@enduml

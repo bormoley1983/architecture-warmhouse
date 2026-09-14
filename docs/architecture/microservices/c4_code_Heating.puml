@@ -1,0 +1,29 @@
+@startuml
+title Smart-House Heating Service - Code Diagram (AI-assisted)
+
+top to bottom direction
+
+' The Service Layer
+class TemperatureService {
+    +string BaseURL
+    +*http.Client HTTPClient
+    +NewTemperatureService(baseURL: string): *TemperatureService
+    +GetTemperatureByID(sensorID: string): (*TemperatureResponse, error)
+    +GetTemperatureByLocation(location: string): (*TemperatureResponse, error)
+ }
+
+' The Data Transfer Object (DTO)
+class TemperatureResponse {
+    +float6able Value
+    +string Unit
+    +datetime Timestamp
+    +string Location
+    +string Status
+    +string SensorID
+    +string SensorType
+    +string Description
+}
+
+' Relationships
+TemperatureService ..> TemperatureResponse : "produs/returns"
+TemperatureService --> "External Temperature API" : "makes HTTP requests to"

@@ -1,0 +1,25 @@
+@startuml
+
+title Smart-House Container Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "User", "A user of 'Smart-house' SaaS instance")
+System(SmartHouse, "Smart-house system")
+
+Container_Boundary(SmartHouse, "Smart-house") {
+    Container(UI, "Mobile Application", "Flutter", "Allows users to manage their smarthouse instance over web interface")
+    Container(APISystem, "API system", "Go", "Backend for all Microservices systems (heat, lights, gates, managements, security, etc.)")
+    Container(Database, "Database", "PostgreSQL", "Stores system data and configuration")
+}
+
+System_Ext(inhouseMQTTRouter, "In-house MQTT Router", "MQTT In-house router interconnecting relevant services to sensors")
+
+
+Rel(user, UI, "Allows users to manage their smarthouse instance over web interface", "Uses the system")
+Rel(UI, APISystem, "Processes payment requests")
+Rel(APISystem, Database, "Reads/Writes user data")
+Rel(APISystem, inhouseMQTTRouter, "Routes sensor data")
+@enduml
