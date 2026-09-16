@@ -1,0 +1,42 @@
+@startuml
+title Device & IoT Connectivity Service — Code Diagram (To Be)
+
+top to bottom direction
+
+class DeviceHandler {
+  +RegisterRoutes(router: RouterGroup): void
+  +ListDevices(ctx: RequestContext): Response
+  +RegisterDevice(ctx: RequestContext): Response
+  +UpdateDevice(ctx: RequestContext): Response
+  +DeleteDevice(ctx: RequestContext): Response
+}
+class DeviceService {
+  +ListDevices(houseID: UUID): []Device
+  +RegisterDevice(userID: UUID, request: DeviceRequest): Device
+  +UpdateDevice(userID: UUID, deviceID: UUID, request: DeviceRequest): Device
+  +DeleteDevice(userID: UUID, deviceID: UUID): error
+}
+class DeviceRepository {
+  +FindByHouse(houseID: UUID): []Device
+  +Save(device: Device): Device
+  +Delete(deviceID: UUID): error
+}
+class MQTTAdapter {
+  +Provision(device: Device): error
+  +PublishCommand(deviceID: UUID, command: DeviceCommand): error
+  +SubscribeTelemetry(): Channel~TelemetryMessage~
+}
+class Device {
+  +UUID id
+  +UUID houseID
+  +string name
+  +DeviceType type
+  +DeviceStatus status
+}
+
+DeviceHandler --> DeviceService : calls
+DeviceService --> DeviceRepository : persists
+DeviceService --> MQTTAdapter : provisions / sends commands
+DeviceRepository ..> Device : stores
+MQTTAdapter ..> Device : addresses
+@enduml

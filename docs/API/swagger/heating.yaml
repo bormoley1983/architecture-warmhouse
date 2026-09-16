@@ -1,0 +1,74 @@
+openapi: 3.0.3
+info:
+  title: Smart-House Heating API
+  description: API for managing heating systems and controlling temperature actuators via MQTT.
+  version: 1.0.0
+servers:
+  - url: http://localhost:808 
+    description: Local development server
+paths:
+  /heating/commands:
+    post:
+      summary: Send a heating command
+      description: Sends a command (e.g., SET_TEMP, TURN_ON) to a specific heating actuator.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HeatingCommand'
+      responses:
+        '202':
+          description: Command accepted and queued for delivery via MQTT
+        '400':
+          description: Invalid command format
+  /heating/status/{sensor_id}:
+    get:
+      summary: Get heating status for a sensor
+      parameters:
+        - name: sensor_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Current heating status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatingStatus'
+        '404':
+          description: Sensor not found
+
+components:
+  schemas:
+    # --- Request DTO ---
+    HeatingCommand:
+      type: object
+      required: [target_id, command]
+      properties:
+        target_id: 
+          type: integer
+          description: "ID of the heater or temperature sensor"
+        command: 
+          type: string
+          enum: [SET_TEMP, TURN_ON, TURN_OFF, RESET]
+          description: "The action to perform"
+        value: 
+          type: number
+          format: double
+          description: "Target temperature value (used with SET_TEMP)"
+        timestamp: 
+          type: string
+          format: date-time
+
+    # --- Response DTO ---
+    HeatingStatus:
+      type: object
+      properties:
+        sensor_id: { type: integer }
+        is_active: { type: boolean }
+        current_temperature: { type: number, format: double }
+        target_temperature: { type: number, format: double }
+        last_updated: { type: string, format: date-time }

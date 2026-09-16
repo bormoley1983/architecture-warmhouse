@@ -1,0 +1,49 @@
+@startuml
+title Heating Controller — Code Diagram (To Be)
+
+top to bottom direction
+
+class HeatingHandler {
+  +SetTargetTemperature(ctx: RequestContext): Response
+  +GetHeatingState(ctx: RequestContext): Response
+}
+class HeatingService {
+  +SetTargetTemperature(access: AccessContext, request: HeatingRequest): Command
+  +GetState(houseID: UUID): HeatingState
+}
+class AccessContext {
+  +UUID userID
+  +UUID houseID
+  +Set~ModuleType~ enabledModules
+  +CanUse(module: ModuleType): bool
+}
+class DeviceClient {
+  +FindHeatingActuator(houseID: UUID, zoneID: UUID): Device
+}
+class CommandRepository {
+  +Save(command: Command): Command
+  +FindLatestByZone(zoneID: UUID): Command
+}
+class MQTTCommandPublisher {
+  +PublishHeatingCommand(deviceID: UUID, target: float64): error
+}
+class HeatingRequest {
+  +UUID zoneID
+  +float64 targetTemperature
+}
+class Command {
+  +UUID id
+  +UUID deviceID
+  +float64 targetTemperature
+  +CommandStatus status
+}
+
+HeatingHandler --> HeatingService : calls
+HeatingService --> DeviceClient : resolves actuator
+HeatingService --> CommandRepository : records command
+HeatingService --> MQTTCommandPublisher : dispatches command
+HeatingService ..> HeatingRequest : accepts
+HeatingService ..> AccessContext : validates Heating claim
+CommandRepository ..> Command : stores
+MQTTCommandPublisher ..> Command : publishes
+@enduml

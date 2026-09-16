@@ -1,0 +1,30 @@
+@startuml
+title Device & IoT Connectivity Service — C4 Component Diagram (To Be)
+
+top to bottom direction
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+Container_Ext(gateway, "API Gateway", "Routes authenticated client requests")
+Container_Ext(mqttBroker, "Home MQTT broker", "Connects house devices")
+ContainerDb(deviceDb, "Device database", "PostgreSQL", "Devices, capabilities and house assignment")
+Container_Ext(telemetryService, "Telemetry service", "Consumes measurements")
+
+Container_Boundary(iotService, "Device & IoT Connectivity service") {
+  Component(deviceController, "Device API controller", "Go / Gin", "Validates requests and extracts user and house context")
+  Component(deviceApplicationService, "Device application service", "Go", "Registers, lists and changes devices; enforces house ownership")
+  Component(provisioningService, "Provisioning service", "Go", "Creates device credentials and provisioning commands")
+  Component(deviceRepository, "Device repository", "Go / pgx", "Persists devices and capabilities")
+  Component(mqttAdapter, "MQTT adapter", "Go MQTT client", "Publishes commands and forwards device events")
+  Component(telemetryPublisher, "Telemetry event publisher", "Go", "Normalizes accepted telemetry and forwards it")
+}
+
+Rel(gateway, deviceController, "Device API", "HTTPS / JSON")
+Rel(deviceController, deviceApplicationService, "Calls")
+Rel(deviceApplicationService, provisioningService, "Provisions device")
+Rel(deviceApplicationService, deviceRepository, "Reads/writes")
+Rel(deviceRepository, deviceDb, "SQL")
+Rel(provisioningService, mqttAdapter, "Publishes provisioning command")
+Rel(mqttAdapter, mqttBroker, "Publishes / subscribes", "MQTT")
+Rel(mqttAdapter, telemetryPublisher, "Forwards device event")
+Rel(telemetryPublisher, telemetryService, "Publishes normalized telemetry", "Event stream")
+@enduml

@@ -1,0 +1,75 @@
+@startuml
+title SmartHouse — C4 Container Diagram (To Be)
+
+top to bottom direction
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "Home owner", "Uses the smart-home SaaS")
+System_Ext(paymentProvider, "Payment provider", "Payments and recurring subscriptions")
+System_Ext(mqttBroker, "MQTT broker", "Secure broker for partner devices")
+System_Ext(notificationProvider, "Notification provider", "Push / SMS / email delivery")
+
+System_Boundary(SmartHouse, "SmartHouse SaaS") {
+  Container(app, "Mobile / Web application", "Flutter / Web", "Self-service UI")
+  Container(apiGateway, "API Gateway", "Go / Envoy", "Single public API: authentication, rate limiting and routing; no business logic")
+
+  Container(userService, "User service", "Go", "Identity, profiles, homes, roles and signed access tokens")
+  ContainerDb(userDb, "User database", "PostgreSQL", "Users, homes, memberships and entitlement projection")
+  Container(billingService, "Billing & Modules service", "Go", "Paid module catalogue, subscriptions, payments and entitlement activation")
+  ContainerDb(billingDb, "Billing database", "PostgreSQL", "Products, subscriptions, payments and entitlements")
+
+  Container(iotService, "Device & IoT Connectivity service", "Go", "Device registry, self-service provisioning, partner protocol adapters and all MQTT interaction")
+  ContainerDb(deviceDb, "Device database", "PostgreSQL", "Devices, capabilities, credentials and house assignment")
+
+  Container(telemetryService, "Telemetry service", "Go", "Consumes normalized events; serves current state and history")
+  ContainerDb(telemetryDb, "Telemetry store", "TimescaleDB", "Time-series measurements and device state")
+  Container(rulesService, "Automation Rules service", "Go", "Stores and evaluates user-defined rules")
+  ContainerDb(rulesDb, "Rules database", "PostgreSQL", "Rules, triggers and actions")
+
+  Container(heatingService, "Heating service", "Go", "Paid module: heating policies and commands")
+  Container(lightsService, "Lighting service", "Go", "Paid module: lighting scenes and commands")
+  Container(gatesService, "Gates service", "Go", "Paid module: gate commands and state")
+  Container(securityService, "Security / Monitoring service", "Go", "Paid module: monitoring, alarms and incidents")
+  Container(notificationService, "Notification service", "Go", "Delivers alarms and device alerts")
+}
+
+Rel(user, app, "Uses")
+Rel(app, apiGateway, "HTTPS / JSON")
+Rel(apiGateway, userService, "Identity and profile API", "HTTPS / gRPC")
+Rel(apiGateway, billingService, "Billing and module activation API", "HTTPS / gRPC")
+Rel(apiGateway, iotService, "Device API", "HTTPS / gRPC")
+Rel(apiGateway, telemetryService, "Telemetry query API", "HTTPS / gRPC")
+Rel(apiGateway, rulesService, "Automation API", "HTTPS / gRPC")
+Rel(apiGateway, heatingService, "Heating API", "HTTPS / gRPC")
+Rel(apiGateway, lightsService, "Lighting API", "HTTPS / gRPC")
+Rel(apiGateway, gatesService, "Gates API", "HTTPS / gRPC")
+Rel(apiGateway, securityService, "Security API", "HTTPS / gRPC")
+
+note right of apiGateway
+  Gateway verifies signed access tokens and passes
+  user, house and enabled-module claims to each service.
+  Domain services do not synchronously call User or Billing.
+end note
+
+Rel(userService, userDb, "Reads/writes")
+Rel(billingService, billingDb, "Reads/writes")
+Rel(billingService, paymentProvider, "Charges / payment webhooks", "HTTPS")
+Rel(billingService, userService, "Publishes entitlement changes for token claims", "Event stream")
+Rel(iotService, deviceDb, "Reads/writes")
+Rel(telemetryService, telemetryDb, "Stores / queries")
+Rel(rulesService, rulesDb, "Reads/writes")
+
+Rel(heatingService, iotService, "Sends canonical heating command", "gRPC / event")
+Rel(lightsService, iotService, "Sends canonical lighting command", "gRPC / event")
+Rel(gatesService, iotService, "Sends canonical gate command", "gRPC / event")
+Rel(securityService, iotService, "Sends canonical security command", "gRPC / event")
+Rel(rulesService, heatingService, "Issues heating command", "gRPC / event")
+Rel(rulesService, lightsService, "Issues lighting command", "gRPC / event")
+Rel(rulesService, gatesService, "Issues gate command", "gRPC / event")
+Rel(rulesService, securityService, "Issues security command", "gRPC / event")
+Rel(iotService, mqttBroker, "Provisions devices, publishes commands and subscribes to events", "MQTT")
+Rel(iotService, telemetryService, "Publishes normalized device events", "Event stream")
+Rel(telemetryService, rulesService, "Publishes telemetry events", "Event stream")
+Rel(securityService, notificationService, "Publishes alarm", "Event stream")
+Rel(notificationService, notificationProvider, "Push / SMS / email", "HTTPS")
+@enduml
