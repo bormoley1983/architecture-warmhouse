@@ -1,43 +1,30 @@
 @startuml
-
-title Smart-house Components Diagram
+title Device & IoT Connectivity Service — C4 Component Diagram (To Be)
 
 top to bottom direction
-
 !includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
-Container_Boundary(SmartHouseSystem, "Smart-house System") {
-  Container(App, "Mobile app", "Flutter", "Handles user interactions")
-  Container(Database, "Database", "PostgreSQL", "Stores system data")
-  Container_Ext(MQTTRouter, "MQTT Router", "MQTT", "Acts as home gateway between system and come sensors")
-  Container_Ext(MQTTRouter, "MQTT Router", "MQTT", "Acts as home gateway between system and come sensors")
+Container_Ext(gateway, "API Gateway", "Routes authenticated client requests")
+Container_Ext(mqttBroker, "Home MQTT broker", "Connects house devices")
+ContainerDb(deviceDb, "Device database", "PostgreSQL", "Devices, capabilities and house assignment")
+Container_Ext(telemetryService, "Telemetry service", "Consumes measurements")
+
+Container_Boundary(iotService, "Device & IoT Connectivity service") {
+  Component(deviceController, "Device API controller", "Go / Gin", "Validates requests and extracts user and house context")
+  Component(deviceApplicationService, "Device application service", "Go", "Registers, lists and changes devices; enforces house ownership")
+  Component(provisioningService, "Provisioning service", "Go", "Creates device credentials and provisioning commands")
+  Component(deviceRepository, "Device repository", "Go / pgx", "Persists devices and capabilities")
+  Component(mqttAdapter, "MQTT adapter", "Go MQTT client", "Publishes commands and forwards device events")
+  Component(telemetryPublisher, "Telemetry event publisher", "Go", "Normalizes accepted telemetry and forwards it")
 }
 
-Container(App, "Mobile app", "Flutter") {
-  Component(AuthController, "AuthController", "Handles authentication and authorization")
-  Component(UserController, "UserController", "Manages user profiles")
-  Component(ModulesController, "ModulesController", "Manages modules")
-  Component(SensorsManagementController, "SensorsManagementController", "Handles sensors processing")
-  Component(HeatingController, "Heating Controller", "Handles Heating management")
-  Component(LightsController, "Lights Controller", "Handles Lights management")
-  Component(GatesController, "Gates Controller", "Handles Gates management")
-  Component(SecurityController, "Security Controller", "Handles Security management")
-  Component(RBEController, "Rules based engine Controller", "Handles Rules management")
-  Component(ServiceLayer, "Service Layer", "Business logic")
-  Component(RepositoryLayer, "Repository Layer", "Data access logic")
-  Component(PluginLayer, "Plugin Layer", "MQTT implementation adapter logic")
-}
-
-Rel(AuthController,ServiceLayer,"Calls business logic")
-Rel(UserController,ServiceLayer,"Calls business logic")
-Rel(ModulesController,ServiceLayer,"Calls business logic")
-Rel(SensorsManagementController,ServiceLayer,"Calls business logic")
-Rel(HeatingController,ServiceLayer,"Calls business logic")
-Rel(LightsController,ServiceLayer,"Calls business logic")
-Rel(GatesController,ServiceLayer,"Calls business logic")
-Rel(SecurityController,ServiceLayer,"Calls business logic")
-Rel(ServiceLayer,RepositoryLayer,"Reads/Writes data")
-Rel(ServiceLayer,PluginLayer,"Reads/Writes data")
-Rel(RepositoryLayer,Database,"Reads/Writes user data")
-Rel(PluginLayer,MQTTRouter,"operates home sensors commands routes")
+Rel(gateway, deviceController, "Device API", "HTTPS / JSON")
+Rel(deviceController, deviceApplicationService, "Calls")
+Rel(deviceApplicationService, provisioningService, "Provisions device")
+Rel(deviceApplicationService, deviceRepository, "Reads/writes")
+Rel(deviceRepository, deviceDb, "SQL")
+Rel(provisioningService, mqttAdapter, "Publishes provisioning command")
+Rel(mqttAdapter, mqttBroker, "Publishes / subscribes", "MQTT")
+Rel(mqttAdapter, telemetryPublisher, "Forwards device event")
+Rel(telemetryPublisher, telemetryService, "Publishes normalized telemetry", "Event stream")
 @enduml

@@ -1,29 +1,49 @@
 @startuml
-title Smart-House Heating Service - Code Diagram (AI-assisted)
+title Heating Controller — Code Diagram (To Be)
 
 top to bottom direction
 
-' The Service Layer
-class TemperatureService {
-    +string BaseURL
-    +*http.Client HTTPClient
-    +NewTemperatureService(baseURL: string): *TemperatureService
-    +GetTemperatureByID(sensorID: string): (*TemperatureResponse, error)
-    +GetTemperatureByLocation(location: string): (*TemperatureResponse, error)
- }
-
-' The Data Transfer Object (DTO)
-class TemperatureResponse {
-    +float6able Value
-    +string Unit
-    +datetime Timestamp
-    +string Location
-    +string Status
-    +string SensorID
-    +string SensorType
-    +string Description
+class HeatingHandler {
+  +SetTargetTemperature(ctx: RequestContext): Response
+  +GetHeatingState(ctx: RequestContext): Response
+}
+class HeatingService {
+  +SetTargetTemperature(access: AccessContext, request: HeatingRequest): Command
+  +GetState(houseID: UUID): HeatingState
+}
+class AccessContext {
+  +UUID userID
+  +UUID houseID
+  +Set~ModuleType~ enabledModules
+  +CanUse(module: ModuleType): bool
+}
+class DeviceClient {
+  +FindHeatingActuator(houseID: UUID, zoneID: UUID): Device
+}
+class CommandRepository {
+  +Save(command: Command): Command
+  +FindLatestByZone(zoneID: UUID): Command
+}
+class MQTTCommandPublisher {
+  +PublishHeatingCommand(deviceID: UUID, target: float64): error
+}
+class HeatingRequest {
+  +UUID zoneID
+  +float64 targetTemperature
+}
+class Command {
+  +UUID id
+  +UUID deviceID
+  +float64 targetTemperature
+  +CommandStatus status
 }
 
-' Relationships
-TemperatureService ..> TemperatureResponse : "produs/returns"
-TemperatureService --> "External Temperature API" : "makes HTTP requests to"
+HeatingHandler --> HeatingService : calls
+HeatingService --> DeviceClient : resolves actuator
+HeatingService --> CommandRepository : records command
+HeatingService --> MQTTCommandPublisher : dispatches command
+HeatingService ..> HeatingRequest : accepts
+HeatingService ..> AccessContext : validates Heating claim
+CommandRepository ..> Command : stores
+MQTTCommandPublisher ..> Command : publishes
+@enduml

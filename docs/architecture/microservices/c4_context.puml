@@ -1,18 +1,19 @@
 @startuml
-
-title Smart-house Context Diagram - Current Monolytic implementation
+title SmartHouse — C4 System Context Diagram (To Be)
 
 top to bottom direction
-
 !includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
-Person(user, "User", "A user of current 'Smart-house' instance")
-Person(admin, "Administrator", "An administrator managing the system during service")
-System(SmartHouse, "Smart-house system", "System managing thermal control, reading thermal sensors data")
+Person(user, "Home owner", "Self-serves their smart-home modules, devices, automations and telemetry")
+Person(support, "Support specialist", "Helps customers operate the SaaS platform")
+System(SmartHouse, "SmartHouse SaaS", "Multi-city smart-home platform: users, paid modules, device management, telemetry and automation")
+System_Ext(paymentProvider, "Payment provider", "Processes subscriptions and payments")
+System_Ext(mqttBroker, "MQTT broker", "Securely connects Internet-enabled partner devices")
+System_Ext(notificationProvider, "Notification provider", "Delivers push, SMS and email alerts")
 
-System_Ext(MQTTRouter, "MQTT Router", "Operates and manages all house sesnsors")
-
-Rel(user, SmartHouse, "Sets desired temperature, reads thermal sensors data")
-Rel(admin, SmartHouse, "Manages the system in-place up on request")
-Rel(SmartHouse, MQTTRouter, "Usage and control of all the sensors in specified house")
+Rel(user, SmartHouse, "Manages home remotely", "HTTPS")
+Rel(support, SmartHouse, "Supports customers", "HTTPS")
+Rel(SmartHouse, paymentProvider, "Creates payments and receives payment status", "HTTPS")
+Rel(SmartHouse, mqttBroker, "Sends commands and receives device events", "MQTT")
+Rel(SmartHouse, notificationProvider, "Sends alerts", "HTTPS")
 @enduml
